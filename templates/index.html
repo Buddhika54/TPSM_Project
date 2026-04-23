@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TPSM Topic 10 — ML Analysis</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg     : #0a0e1a;
+    --card   : #131c35;
+    --accent : #00e5ff;
+    --green  : #10b981;
+    --red    : #ef4444;
+    --text   : #e2e8f0;
+    --muted  : #64748b;
+    --border : rgba(0,229,255,0.12);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background : var(--bg);
+    color      : var(--text);
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  nav {
+    position       : fixed;
+    top:0; left:0; right:0;
+    display        : flex;
+    justify-content: space-between;
+    align-items    : center;
+    padding        : 18px 48px;
+    background     : rgba(10,14,26,0.9);
+    border-bottom  : 1px solid var(--border);
+    z-index        : 100;
+  }
+  .nav-logo {
+    font-family: 'Syne', sans-serif;
+    font-size  : 1.3rem;
+    font-weight: 800;
+    color      : var(--accent);
+  }
+
+  section {
+    max-width: 1100px;
+    margin   : 0 auto;
+    padding  : 80px 48px;
+  }
+  .section-tag {
+    font-family   : 'JetBrains Mono', monospace;
+    font-size     : 0.75rem;
+    color         : var(--accent);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom : 10px;
+  }
+  .section-title {
+    font-family  : 'Syne', sans-serif;
+    font-size    : 2.2rem;
+    font-weight  : 800;
+    margin-bottom: 12px;
+  }
+  .section-sub {
+    color        : var(--muted);
+    margin-bottom: 40px;
+    line-height  : 1.7;
+  }
+
+  .card {
+    background   : var(--card);
+    border       : 1px solid var(--border);
+    border-radius: 16px;
+    padding      : 28px;
+    margin-bottom: 20px;
+  }
+  .card h3 {
+    font-family  : 'Syne', sans-serif;
+    font-size    : 1.1rem;
+    font-weight  : 700;
+    margin-bottom: 16px;
+    color        : var(--accent);
+  }
+
+  .stats-row {
+    display      : flex;
+    background   : var(--card);
+    border       : 1px solid var(--border);
+    border-radius: 16px;
+    overflow     : hidden;
+    margin-bottom: 60px;
+  }
+  .stat-box {
+    flex        : 1;
+    padding     : 28px 10px;
+    text-align  : center;
+    border-right: 1px solid var(--border);
+  }
+  .stat-box:last-child { border-right: none; }
+  .stat-num {
+    font-family: 'Syne', sans-serif;
+    font-size  : 1.5rem;
+    font-weight: 800;
+    color      : var(--accent);
+    display    : block;
+  }
+  .stat-lbl { color: var(--muted); font-size: 0.8rem; }
+
+  .feat-row {
+    display              : grid;
+    grid-template-columns: 230px 1fr 60px;
+    gap                  : 16px;
+    align-items          : center;
+    margin-bottom        : 12px;
+  }
+  .feat-name { font-size: 0.875rem; font-weight: 500; }
+  .bar-bg    { background: rgba(255,255,255,0.07); border-radius: 4px; height: 8px; overflow: hidden; }
+  .bar-fill  { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #7c3aed, #00e5ff); transition: width 1.2s ease; }
+  .bar-fill.top { background: linear-gradient(90deg, #10b981, #34d399); }
+  .feat-val  { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--muted); text-align: right; }
+
+  .predictor-grid {
+    display              : grid;
+    grid-template-columns: 1fr 1fr;
+    gap                  : 40px;
+  }
+  .form-row { margin-bottom: 18px; }
+  .form-row label {
+    display        : flex;
+    justify-content: space-between;
+    font-size      : 0.85rem;
+    font-weight    : 500;
+    margin-bottom  : 8px;
+  }
+  .form-row label span {
+    font-family  : 'JetBrains Mono', monospace;
+    font-size    : 0.8rem;
+    color        : var(--accent);
+    background   : rgba(0,229,255,0.08);
+    padding      : 2px 8px;
+    border-radius: 4px;
+  }
+  input[type=range] {
+    width             : 100%;
+    height            : 4px;
+    cursor            : pointer;
+    -webkit-appearance: none;
+    background        : rgba(255,255,255,0.1);
+    border-radius     : 2px;
+    outline           : none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width             : 18px;
+    height            : 18px;
+    border-radius     : 50%;
+    background        : var(--accent);
+    cursor            : pointer;
+  }
+
+  .result-side {
+    display        : flex;
+    flex-direction : column;
+    align-items    : center;
+    justify-content: center;
+  }
+  .result-circle {
+    width          : 170px;
+    height         : 170px;
+    border-radius  : 50%;
+    border         : 4px solid;
+    display        : flex;
+    flex-direction : column;
+    align-items    : center;
+    justify-content: center;
+    margin-bottom  : 20px;
+    transition     : all 0.4s ease;
+  }
+  .circle-true  { border-color: var(--green); background: rgba(16,185,129,0.1); }
+  .circle-false { border-color: var(--red);   background: rgba(239,68,68,0.1);  }
+  .result-word  { font-family: 'Syne', sans-serif; font-size: 1.6rem; font-weight: 800; }
+  .result-sub   { font-size: 0.75rem; color: var(--muted); }
+  .prob-bar     { display: flex; height: 10px; border-radius: 5px; overflow: hidden; width: 170px; margin: 10px auto; }
+  .prob-t       { background: var(--green); transition: width 0.4s; }
+  .prob-f       { background: var(--red);   transition: width 0.4s; }
+  .result-msg   { background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 10px; padding: 14px; font-size: 0.82rem; color: var(--muted); text-align: center; line-height: 1.6; width: 100%; }
+
+  .hyp-table    { width: 100%; border-collapse: collapse; }
+  .hyp-table th { background: rgba(255,255,255,0.04); padding: 12px 18px; font-size: 0.78rem; font-weight: 600; color: var(--muted); text-align: left; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 1px; }
+  .hyp-table td { padding: 14px 18px; font-size: 0.875rem; border-top: 1px solid var(--border); }
+  .p-sig        { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--green); }
+  .p-insig      { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--red); }
+  .pill-yes     { background: rgba(16,185,129,0.12); color: var(--green); padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+  .pill-no      { background: rgba(239,68,68,0.12);  color: var(--red);   padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+
+  .divider      { height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); margin: 0 48px; }
+
+  .verdict-badge {
+    display      : inline-flex;
+    align-items  : center;
+    gap          : 10px;
+    padding      : 14px 28px;
+    border-radius: 40px;
+    font-family  : 'Syne', sans-serif;
+    font-size    : 1.3rem;
+    font-weight  : 800;
+    background   : rgba(16,185,129,0.15);
+    border       : 2px solid var(--green);
+    color        : var(--green);
+    margin-top   : 16px;
+  }
+
+  /* Task Load Card Colors */
+.task-card-low    { text-align:center; padding:16px; border-radius:10px; background:rgba(16,185,129,0.1);  border:1px solid rgba(16,185,129,0.3);  }
+.task-card-medium { text-align:center; padding:16px; border-radius:10px; background:rgba(245,158,11,0.1);  border:1px solid rgba(245,158,11,0.3);  }
+.task-card-high   { text-align:center; padding:16px; border-radius:10px; background:rgba(239,68,68,0.1);   border:1px solid rgba(239,68,68,0.3);   }
+
+.task-label-low    { font-family:'Syne',sans-serif; font-size:1.1rem; font-weight:800; color:var(--green); }
+.task-label-medium { font-family:'Syne',sans-serif; font-size:1.1rem; font-weight:800; color:#f59e0b;      }
+.task-label-high   { font-family:'Syne',sans-serif; font-size:1.1rem; font-weight:800; color:var(--red);   }
+
+/* Department performance color */
+.dept-good { font-family:'JetBrains Mono',monospace; font-size:0.8rem; color:var(--green); }
+.dept-bad  { font-family:'JetBrains Mono',monospace; font-size:0.8rem; color:var(--red);   }
+
+  .corr-positive { color: var(--green); }
+  .corr-weak     { color: var(--muted); }
+  .corr-negative { color: var(--red);   }
+
+  .bar-positive  { background: linear-gradient(90deg, #7c3aed, #00e5ff); }
+  .bar-negative  { background: linear-gradient(90deg, #ef4444, #ff6b6b); }
+
+  /* FIX — box-green and box-red are NOW outside verdict-badge */
+  .box-green {
+    margin-top   : 20px;
+    padding      : 20px;
+    border-radius: 10px;
+    background   : rgba(16,185,129,0.08);
+    border       : 1px solid rgba(16,185,129,0.3);
+  }
+  .box-red {
+    margin-top   : 20px;
+    padding      : 20px;
+    border-radius: 10px;
+    background   : rgba(239,68,68,0.08);
+    border       : 1px solid rgba(239,68,68,0.3);
+  }
+
+  .corr-bar {
+  height       : 8px;
+  border-radius: 4px;
+  transition   : width 1.2s ease;
+  width        : 0%;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">TeamSync AI</div>
+  <div style="display:flex; gap:28px;">
+    <a href="#verdict"    style="color:var(--muted);text-decoration:none;font-size:0.875rem;">Verdict</a>
+    <a href="#features"   style="color:var(--muted);text-decoration:none;font-size:0.875rem;">Features</a>
+    <a href="#descriptive"    style="color:var(--muted);text-decoration:none;font-size:0.875rem;">Descriptive</a>
+    <a href="#correlation" style="color:var(--muted);text-decoration:none;font-size:0.875rem;">Correlation</a>
+    <a href="#predictor"  style="color:var(--muted);text-decoration:none;font-size:0.875rem;">Predictor</a>
+    <a href="#hypothesis" style="color:var(--muted);text-decoration:none;font-size:0.875rem;">Hypothesis</a>
+  </div>
+  <div style="background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.3);color:var(--accent);padding:6px 14px;border-radius:20px;font-size:0.75rem;font-family:'JetBrains Mono',monospace;">
+    Analysis
+  </div>
+</nav>
+
+<div style="height:80px;"></div>
+
+<!-- STATS STRIP -->
+<div style="max-width:1100px;margin:40px auto;padding:0 0px;">
+  <div class="stats-row">
+    <div class="stat-box">
+      <span class="stat-num">{{ results.total_employees | int }}</span>
+      <div class="stat-lbl">Employees Analyzed</div>
+    </div>
+    <div class="stat-box">
+      <span class="stat-num">{{ results.accuracy }}%</span>
+      <div class="stat-lbl">Model Accuracy</div>
+    </div>
+    <div class="stat-box">
+      <span class="stat-num">{{ results.true_count | int }}</span>
+      <div class="stat-lbl">Good Coordination</div>
+    </div>
+    <div class="stat-box">
+      <span class="stat-num">{{ results.false_count | int }}</span>
+      <div class="stat-lbl">Poor Coordination</div>
+    </div>
+    <div class="stat-box">
+      <span class="stat-num" style="color:var(--green)">{{ results.verdict }}</span>
+      <div class="stat-lbl">Final Verdict</div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 1: VERDICT -->
+<section id="verdict">
+  <div class="section-tag">Final Answer</div>
+  <div class="section-title">The ML Verdict</div>
+  <p class="section-sub">Based on machine learning analysis of {{ results.total_employees | int }} employees.</p>
+
+  <div class="card">
+    <h3>Topic Statement</h3>
+    <p style="font-size:1.1rem;font-weight:600;margin-bottom:16px;">
+      "Clear task allocation improves team coordination."
+    </p>
+    <p style="color:var(--muted);line-height:1.7;margin-bottom:20px;">
+      After training the ML model on {{ results.total_employees | int }} employees,
+      the model predicts team coordination with
+      <strong style="color:var(--accent)">{{ results.accuracy }}%</strong> accuracy.
+      Best model: <strong style="color:var(--accent)">{{ results.best_model }}</strong>.
+    </p>
+    <div class="verdict-badge">
+      {% if results.verdict == 'TRUE' %}
+        ✅ &nbsp; TOPIC IS TRUE
+      {% else %}
+        ⚠️ &nbsp; TOPIC IS UNCERTAIN
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SECTION 2: FEATURE IMPORTANCE — FIXED FOR LOOP -->
+<section id="features">
+  <div class="section-tag">Feature Importance</div>
+  <div class="section-title">What Predicts Team Coordination?</div>
+  <p class="section-sub">Real importance values from your trained Random Forest model.</p>
+
+  <div class="card">
+
+    {% set max_val = results.feature_importance.values() | max %}
+
+    {% for feat, val in results.feature_importance.items() %}
+      {% set bar_width = ((val / max_val) * 90) | int %}
+      <div class="feat-row">
+        <div class="feat-name">
+          {{ feat }}
+          {% if feat == 'Projects_Handled' %}
+            <span style="background:rgba(0,229,255,0.12);color:var(--accent);font-size:0.65rem;padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;margin-left:6px;">
+              MAIN
+            </span>
+          {% endif %}
+        </div>
+        <div class="bar-bg">
+          <div class="bar-fill {% if loop.index <= 2 %}top{% endif %}"style="width:{{ bar_width }}%">
+          </div>
+        </div>
+        <div class="feat-val">{{ val }}</div>
+      </div>
+    {% endfor %}
+
+    <div style="margin-top:20px;padding:16px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.3);border-radius:10px;">
+      <strong style="color:var(--green);">
+        ✅ Projects_Handled importance = {{ results.feature_importance.get('Projects_Handled', 'N/A') }}
+      </strong>
+      <p style="color:var(--muted);font-size:0.85rem;margin-top:6px;line-height:1.6;">
+        Task allocation is one of the top predictors of team coordination.
+      </p>
+    </div>
+
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- DESCRIPTIVE ANALYSIS SECTION -->
+<section id="descriptive">
+  <div class="section-tag">Descriptive Analysis</div>
+  <div class="section-title">Dataset Overview & Statistics</div>
+  <p class="section-sub">
+    Statistical summary of 100,000 employee records including
+    distributions, outliers and department performance.
+  </p>
+
+  <!-- KEY STATS CARDS -->
+  <div class="stats-row" style="margin-bottom:30px;">
+    <div class="stat-box">
+      <span class="stat-num">{{ results.desc_stats.mean_performance }}</span>
+      <div class="stat-lbl">Mean Performance</div>
+    </div>
+    <div class="stat-box">
+      <span class="stat-num">{{ results.desc_stats.mean_projects }}</span>
+      <div class="stat-lbl">Mean Projects</div>
+    </div>
+    <div class="stat-box">
+      <span class="stat-num">{{ results.desc_stats.mean_work_hours }}</span>
+      <div class="stat-lbl">Mean Work Hrs/Wk</div>
+    </div>
+    <div class="stat-box">
+      <span class="stat-num">{{ results.desc_stats.mean_training }}</span>
+      <div class="stat-lbl">Mean Training Hrs</div>
+    </div>
+    <div class="stat-box">
+      <span class="stat-num" style="color:var(--green);">0</span>
+      <div class="stat-lbl">Outliers Found</div>
+    </div>
+  </div>
+
+  <!-- CHART 1: HISTOGRAMS -->
+  <div class="card">
+    <h3>📊 Feature Distributions — Histograms</h3>
+    <p style="color:var(--muted);font-size:0.875rem;margin-bottom:16px;line-height:1.7;">
+      Shows how each variable is distributed across 100,000 employees.
+      Mean (green dashed) and Median (red dashed) lines are shown.
+      All features show uniform distribution confirming balanced dataset.
+    </p>
+    <img src="/static/plots/01_histograms.png"
+         style="width:100%;border-radius:10px;border:1px solid var(--border);"
+         alt="Feature Histograms">
+    <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+      <div style="background:rgba(0,229,255,0.05);border:1px solid var(--border);border-radius:8px;padding:12px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--accent);margin-bottom:4px;">PROJECTS HANDLED</div>
+        <div style="font-size:0.85rem;color:var(--muted);">Uniform 0-49 | Mean: {{ results.desc_stats.mean_projects }}</div>
+      </div>
+      <div style="background:rgba(0,229,255,0.05);border:1px solid var(--border);border-radius:8px;padding:12px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--accent);margin-bottom:4px;">PERFORMANCE SCORE</div>
+        <div style="font-size:0.85rem;color:var(--muted);">Each score ~20% | Mean: {{ results.desc_stats.mean_performance }}</div>
+      </div>
+      <div style="background:rgba(0,229,255,0.05);border:1px solid var(--border);border-radius:8px;padding:12px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--accent);margin-bottom:4px;">WORK HOURS</div>
+        <div style="font-size:0.85rem;color:var(--muted);">Spike at 60hrs | Mean: {{ results.desc_stats.mean_work_hours }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHART 2: BOXPLOTS -->
+  <div class="card">
+    <h3>📦 Boxplots — Outlier Detection</h3>
+    <p style="color:var(--muted);font-size:0.875rem;margin-bottom:16px;line-height:1.7;">
+      IQR Method used to detect outliers. Values beyond Q1-1.5×IQR or Q3+1.5×IQR
+      are considered outliers. All 9 variables show 0 outliers — dataset is completely clean.
+    </p>
+    <img src="/static/plots/02_boxplots.png"
+         style="width:100%;border-radius:10px;border:1px solid var(--border);"
+         alt="Boxplots">
+
+    <!-- Outlier Summary -->
+    <div style="margin-top:16px;padding:16px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.3);border-radius:10px;">
+      <strong style="color:var(--green);">✅ Zero Outliers Detected in All Variables</strong>
+      <p style="color:var(--muted);font-size:0.85rem;margin-top:8px;line-height:1.7;">
+        All features fall within the acceptable IQR range.
+        No data cleaning or outlier removal was required.
+        This confirms the dataset is synthetically generated
+        with predefined value boundaries for each column.
+      </p>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px;">
+        <div style="text-align:center;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:1rem;color:var(--green);font-weight:700;">Q1</div>
+          <div style="font-size:0.75rem;color:var(--muted);">25th Percentile</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:1rem;color:var(--accent);font-weight:700;">Q3</div>
+          <div style="font-size:0.75rem;color:var(--muted);">75th Percentile</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:1rem;color:var(--green);font-weight:700;">IQR</div>
+          <div style="font-size:0.75rem;color:var(--muted);">Q3 minus Q1</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:1rem;color:var(--green);font-weight:700;">0</div>
+          <div style="font-size:0.75rem;color:var(--muted);">Total Outliers</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHART 3: PERFORMANCE DISTRIBUTION -->
+  <div class="card">
+    <h3>🎯 Performance Score Distribution</h3>
+    <p style="color:var(--muted);font-size:0.875rem;margin-bottom:16px;line-height:1.7;">
+      Performance scores are perfectly uniformly distributed.
+      Each score level (1 to 5) contains approximately 20% of employees.
+      Mean = {{ results.desc_stats.mean_performance }} which is exactly at neutral level.
+    </p>
+    <img src="/static/plots/03_performance_distribution.png"
+         style="width:100%;border-radius:10px;border:1px solid var(--border);"
+         alt="Performance Distribution">
+
+    <!-- Score breakdown table -->
+    <div style="margin-top:16px;display:grid;grid-template-columns:repeat(5,1fr);gap:10px;">
+      {% for score, count in results.desc_stats.score_dist.items() %}
+      <div style="text-align:center;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:12px;">
+        <div style="font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:var(--accent);">{{ count | int }}</div>
+        <div style="font-size:0.7rem;color:var(--muted);">Score {{ score }}</div>
+        <div style="font-size:0.7rem;color:var(--muted);">{{ ((count / results.total_employees) * 100) | round(1) }}%</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- CHART 4: DEPARTMENT ANALYSIS -->
+  <div class="card">
+    <h3>🏢 Department Analysis</h3>
+    <p style="color:var(--muted);font-size:0.875rem;margin-bottom:16px;line-height:1.7;">
+      Employee distribution and average performance across all 9 departments.
+      All departments perform within a very narrow range (2.981 to 3.020).
+      Engineering scores highest while Marketing and Finance score lowest.
+    </p>
+    <img src="/static/plots/04_department_analysis.png"
+         style="width:100%;border-radius:10px;border:1px solid var(--border);"
+         alt="Department Analysis">
+
+    <!-- Department performance table -->
+    <div style="margin-top:16px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        {% for dept, perf in results.desc_stats.dept_performance.items() %}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid var(--border);">
+          <span style="font-size:0.875rem;">{{ dept }}</span>
+          {% if perf >= 3.0 %}
+            <span class="dept-good">{{ perf }}</span>
+          {% else %}
+            <span class="dept-bad">{{ perf }}</span>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- CHART 5: TASK LOAD ANALYSIS -->
+  <div class="card">
+    <h3>📋 Task Load Analysis</h3>
+    <p style="color:var(--muted);font-size:0.875rem;margin-bottom:16px;line-height:1.7;">
+      Employees grouped by task load based on Projects_Handled.
+      Low (0-15), Medium (16-30), High (31-49).
+      All three groups show nearly identical performance (~3.0)
+      confirming that task quantity does not affect performance score.
+    </p>
+    <img src="/static/plots/05_task_load_analysis.png"
+         style="width:100%;border-radius:10px;border:1px solid var(--border);"
+         alt="Task Load Analysis">
+
+    <!-- Task load summary -->
+    <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+
+  <div class="task-card-low">
+    <div class="task-label-low">Low</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:1.3rem;font-weight:700;color:var(--text);margin:6px 0;">
+      {{ results.desc_stats.task_load_counts['Low'] | int }}
+    </div>
+    <div style="font-size:0.75rem;color:var(--muted);">employees</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.9rem;color:var(--accent);margin-top:6px;">
+      Avg: {{ results.desc_stats.task_load_perf['Low'] }}
+    </div>
+  </div>
+
+  <div class="task-card-medium">
+    <div class="task-label-medium">Medium</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:1.3rem;font-weight:700;color:var(--text);margin:6px 0;">
+      {{ results.desc_stats.task_load_counts['Medium'] | int }}
+    </div>
+    <div style="font-size:0.75rem;color:var(--muted);">employees</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.9rem;color:var(--accent);margin-top:6px;">
+      Avg: {{ results.desc_stats.task_load_perf['Medium'] }}
+    </div>
+  </div>
+
+  <div class="task-card-high">
+    <div class="task-label-high">High</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:1.3rem;font-weight:700;color:var(--text);margin:6px 0;">
+      {{ results.desc_stats.task_load_counts['High'] | int }}
+    </div>
+    <div style="font-size:0.75rem;color:var(--muted);">employees</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.9rem;color:var(--accent);margin-top:6px;">
+      Avg: {{ results.desc_stats.task_load_perf['High'] }}
+    </div>
+  </div>
+
+</div>
+
+    <div style="margin-top:16px;padding:14px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:10px;">
+      <strong style="color:var(--red);">❌ Key Finding</strong>
+      <p style="color:var(--muted);font-size:0.85rem;margin-top:6px;">
+        Low task load avg = {{ results.desc_stats.task_load_perf['Low'] }} vs
+        High task load avg = {{ results.desc_stats.task_load_perf['High'] }}.
+        Difference = {{ ((results.desc_stats.task_load_perf['High'] - results.desc_stats.task_load_perf['Low']) | abs | round(3)) }}.
+        Task quantity has virtually NO effect on performance score.
+      </p>
+    </div>
+  </div>
+
+  <!-- CHART 6: SCATTER PLOTS -->
+  <div class="card">
+    <h3>🔵 Scatter Plots — Key Relationships</h3>
+    <p style="color:var(--muted);font-size:0.875rem;margin-bottom:16px;line-height:1.7;">
+      Scatter plots show the relationship between each feature and Performance_Score.
+      All plots show horizontal line patterns confirming near-zero correlations.
+      The trend line is almost perfectly flat for all variables.
+    </p>
+    <img src="/static/plots/08_scatter_plots.png"
+         style="width:100%;border-radius:10px;border:1px solid var(--border);"
+         alt="Scatter Plots">
+
+    <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div style="padding:12px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid var(--border);">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--red);margin-bottom:4px;">Projects_Handled vs Performance</div>
+        <div style="font-size:0.85rem;color:var(--muted);">r = 0.0006 — Virtually zero correlation</div>
+      </div>
+      <div style="padding:12px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid var(--border);">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--red);margin-bottom:4px;">Training_Hours vs Performance</div>
+        <div style="font-size:0.85rem;color:var(--muted);">r = 0.0024 — Virtually zero correlation</div>
+      </div>
+      <div style="padding:12px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid var(--border);">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--red);margin-bottom:4px;">Satisfaction vs Performance</div>
+        <div style="font-size:0.85rem;color:var(--muted);">r = 0.0017 — Virtually zero correlation</div>
+      </div>
+      <div style="padding:12px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid var(--border);">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--red);margin-bottom:4px;">Work Hours vs Performance</div>
+        <div style="font-size:0.85rem;color:var(--muted);">r = -0.0056 — Slight negative</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DESCRIPTIVE CONCLUSION -->
+  <div class="card">
+    <h3>📝 Descriptive Analysis Conclusion</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div style="padding:16px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.3);border-radius:10px;">
+        <strong style="color:var(--green);display:block;margin-bottom:8px;">✅ Clean Dataset</strong>
+        <p style="color:var(--muted);font-size:0.85rem;line-height:1.6;">Zero outliers detected using IQR method. No missing values. Dataset is complete and ready for ML.</p>
+      </div>
+      <div style="padding:16px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.3);border-radius:10px;">
+        <strong style="color:var(--green);display:block;margin-bottom:8px;">✅ Balanced Distribution</strong>
+        <p style="color:var(--muted);font-size:0.85rem;line-height:1.6;">Each performance score contains ~20% of employees. No class imbalance problem for ML models.</p>
+      </div>
+      <div style="padding:16px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:10px;">
+        <strong style="color:var(--red);display:block;margin-bottom:8px;">❌ Weak Correlations</strong>
+        <p style="color:var(--muted);font-size:0.85rem;line-height:1.6;">All features show near-zero correlation with Performance Score. Task variables do not linearly predict performance.</p>
+      </div>
+      <div style="padding:16px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:10px;">
+        <strong style="color:var(--red);display:block;margin-bottom:8px;">❌ No Task Effect</strong>
+        <p style="color:var(--muted);font-size:0.85rem;line-height:1.6;">Low/Medium/High task load groups all score ~3.0. Task quantity does not improve performance in this dataset.</p>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<div class="divider"></div>
+
+<!-- CORRELATION MATRIX SECTION -->
+<section id="correlation">
+  <div class="section-tag">Correlation Analysis</div>
+  <div class="section-title">Correlation with Team Coordination</div>
+  <p class="section-sub">
+    How strongly each variable relates to Performance_Score.
+    Values closer to +1 mean stronger positive relationship.
+  </p>
+
+  <div class="card">
+
+    <!-- Key Finding Box -->
+    <div style="padding:20px;border-radius:10px;background:rgba(0,229,255,0.06);border:1px solid rgba(0,229,255,0.2);margin-bottom:24px;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--accent);margin-bottom:10px;">
+        KEY FINDING
+      </div>
+      <div style="font-size:1.1rem;font-weight:600;margin-bottom:8px;">
+        Projects_Handled vs Performance_Score
+      </div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:2rem;font-weight:800;color:var(--accent);">
+        r = {{ results.proj_corr_value }}
+      </div>
+      <div style="color:var(--muted);font-size:0.875rem;margin-top:8px;">
+        {% if results.proj_corr_value >= 0.3 %}
+          Strong positive correlation — task allocation strongly linked to coordination ✅
+        {% elif results.proj_corr_value >= 0.1 %}
+          Moderate positive correlation — task allocation linked to coordination ✅
+        {% elif results.proj_corr_value > 0 %}
+          Weak positive correlation — small relationship exists ⚠️
+        {% else %}
+          No positive correlation found ❌
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Correlation Bars -->
+    <div style="margin-bottom:16px;font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--muted);letter-spacing:2px;">
+      ALL FEATURES vs PERFORMANCE_SCORE
+    </div>
+
+    {% for feature, corr_val in results.perf_correlations.items() %}
+
+  {% if corr_val >= 0.1 %}
+    {% set text_class = 'corr-positive' %}
+  {% elif corr_val < 0 %}
+    {% set text_class = 'corr-negative' %}
+  {% else %}
+    {% set text_class = 'corr-weak' %}
+  {% endif %}
+
+  {% if corr_val >= 0 %}
+    {% set bar_class = 'bar-positive' %}
+  {% else %}
+    {% set bar_class = 'bar-negative' %}
+  {% endif %}
+
+  <div style="margin-bottom:14px;">
+    <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+
+      <span style="font-size:0.875rem;font-weight:500;">
+        {{ feature }}
+        {% if feature == 'Projects_Handled' %}
+          <span style="background:rgba(0,229,255,0.12);color:var(--accent);font-size:0.65rem;padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;margin-left:6px;">
+            MAIN
+          </span>
+        {% endif %}
+      </span>
+
+      <span class="{{ text_class }}"
+            style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;">
+        {{ corr_val }}
+      </span>
+
+    </div>
+
+    <div class="bar-bg">
+      <div class="corr-bar {{ bar_class }}"
+           data-value="{{ corr_val }}">
+      </div>
+    </div>
+
+  </div>
+
+{% endfor %}
+
+    <!-- Scale Reference -->
+    <div style="margin-top:24px;display:flex;gap:20px;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:8px;font-size:0.8rem;color:var(--muted);">
+        <div style="width:12px;height:12px;border-radius:2px;background:var(--green);"></div>
+        Strong ( above 0.3 )
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:0.8rem;color:var(--muted);">
+        <div style="width:12px;height:12px;border-radius:2px;background:var(--accent);"></div>
+        Moderate ( 0.1 to 0.3 )
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:0.8rem;color:var(--muted);">
+        <div style="width:12px;height:12px;border-radius:2px;background:var(--red);"></div>
+        Negative ( below 0 )
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SECTION 3: PREDICTOR -->
+<section id="predictor">
+  <div class="section-tag">Live Predictor</div>
+  <div class="section-title">Try the ML Predictor</div>
+  <p class="section-sub">Adjust sliders — real trained model predicts TRUE or FALSE instantly.</p>
+
+  <div class="card">
+    <div class="predictor-grid">
+
+      <div>
+        <h3>Employee Profile</h3>
+        <div class="form-row">
+          <label>Projects Handled <span id="v-proj">20</span></label>
+          <input type="range" id="proj" min="0" max="49" value="20" oninput="runPredict()">
+        </div>
+        <div class="form-row">
+          <label>Training Hours <span id="v-train">40</span></label>
+          <input type="range" id="train" min="0" max="100" value="40" oninput="runPredict()">
+        </div>
+        <div class="form-row">
+          <label>Team Size <span id="v-team">10</span></label>
+          <input type="range" id="team" min="1" max="19" value="10" oninput="runPredict()">
+        </div>
+        <div class="form-row">
+          <label>Work Hours/Week <span id="v-work">45</span></label>
+          <input type="range" id="work" min="20" max="60" value="45" oninput="runPredict()">
+        </div>
+        <div class="form-row">
+          <label>Overtime Hours <span id="v-ot">10</span></label>
+          <input type="range" id="ot" min="0" max="40" value="10" oninput="runPredict()">
+        </div>
+        <div class="form-row">
+          <label>Satisfaction Score <span id="v-sat">3.0</span></label>
+          <input type="range" id="sat" min="1" max="5" step="0.1" value="3.0" oninput="runPredict()">
+        </div>
+      </div>
+
+      <div class="result-side">
+        <div class="result-circle circle-true" id="result-circle">
+          <div class="result-word" id="result-word" style="color:var(--green)">TRUE</div>
+          <div class="result-sub">Team Coordination</div>
+        </div>
+        <div style="text-align:center;margin-bottom:10px;">
+          <div id="prob-label" style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;color:var(--green);font-weight:600;">
+            Probability TRUE: --
+          </div>
+          <div class="prob-bar">
+            <div class="prob-t" id="prob-t" style="width:50%"></div>
+            <div class="prob-f" id="prob-f" style="width:50%"></div>
+          </div>
+          <div id="prob-f-label" style="color:var(--muted);font-size:0.75rem;">
+            FALSE: --
+          </div>
+        </div>
+        <div class="result-msg" id="result-msg">
+          Adjust sliders to get a real ML prediction.
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SECTION 4: HYPOTHESIS -->
+<section id="hypothesis">
+  <div class="section-tag">Statistical Inference</div>
+  <div class="section-title">Hypothesis Testing</div>
+  <p class="section-sub">One Sample T-Test result from your dataset.</p>
+
+  <div class="card">
+
+    <div style="margin-bottom:24px;padding:20px;background:rgba(255,255,255,0.03);border-radius:10px;border-left:3px solid var(--accent);">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--accent);margin-bottom:10px;">
+        HYPOTHESES
+      </div>
+      <div style="margin-bottom:8px;">
+        <strong>H0:</strong>
+        <span style="color:var(--muted);">Mean Performance_Score = 3</span>
+      </div>
+      <div style="margin-bottom:8px;">
+        <strong>H1:</strong>
+        <span style="color:var(--muted);">Mean Performance_Score &gt; 3</span>
+      </div>
+      <div>
+        <strong>α:</strong>
+        <span style="color:var(--muted);">0.05 &nbsp;|&nbsp; One Tailed (right tail)</span>
+      </div>
+    </div>
+
+    <table class="hyp-table">
+      <thead>
+        <tr>
+          <th>Test</th>
+          <th>Sample Size</th>
+          <th>Mean</th>
+          <th>T-Statistic</th>
+          <th>P-Value</th>
+          <th>Decision</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% set h2 = results.hypothesis_results.get('H2_OneSampleT', {}) %}
+        <tr>
+          <td>One Sample T-Test</td>
+          <td style="font-family:'JetBrains Mono',monospace;">{{ results.total_employees | int }}</td>
+          <td style="font-family:'JetBrains Mono',monospace;color:var(--accent);">{{ results.sample_mean }}</td>
+          <td style="font-family:'JetBrains Mono',monospace;">{{ results.t_statistic }}</td>
+          <td>
+            {% if h2.get('decision','') == 'Reject H0' %}
+              <span class="p-sig">{{ h2.get('p_value', 'N/A') }}</span>
+            {% else %}
+              <span class="p-insig">{{ h2.get('p_value', 'N/A') }}</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if h2.get('decision','') == 'Reject H0' %}
+              <span class="pill-yes">Reject H0</span>
+            {% else %}
+              <span class="pill-no">Fail to Reject H0</span>
+            {% endif %}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    {% set h2 = results.hypothesis_results.get('H2_OneSampleT', {}) %}
+
+    {% if h2.get('decision','') == 'Reject H0' %}
+    <div class="box-green">
+      <div style="color:var(--green);font-family:'Syne',sans-serif;font-weight:700;margin-bottom:8px;">
+        ✅ REJECT H0 — Topic is Supported
+      </div>
+      <div style="color:var(--muted);font-size:0.875rem;line-height:1.7;">
+        The mean Performance_Score of
+        <strong style="color:var(--text);">{{ results.sample_mean }}</strong>
+        is significantly greater than 3
+        (p = {{ h2.get('p_value', 'N/A') }}).
+        Employees are performing ABOVE average level.
+        Team coordination is statistically confirmed to be GOOD.
+        Clear task allocation IS improving team coordination. ✅
+      </div>
+    </div>
+    {% else %}
+    <div class="box-red">
+      <div style="color:var(--red);font-family:'Syne',sans-serif;font-weight:700;margin-bottom:8px;">
+        ❌ FAIL TO REJECT H0 — Topic Not Supported
+      </div>
+      <div style="color:var(--muted);font-size:0.875rem;line-height:1.7;">
+        Cannot prove mean Performance_Score is significantly
+        greater than 3 (p = {{ h2.get('p_value', 'N/A') }}).
+        Team coordination cannot be confirmed as above average. ❌
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer style="max-width:1100px;margin:0 auto;padding:40px 48px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border);">
+  <p style="color:var(--muted);font-size:0.85rem;">
+    TPSM Group Project · Topic 10 · Clear Task Allocation Improves Team Coordination
+  </p>
+  <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--accent);background:rgba(0,229,255,0.08);border:1px solid var(--border);padding:6px 14px;border-radius:6px;">
+    Dataset: {{ results.total_employees | int }} employees
+  </div>
+</footer>
+
+<script>
+function runPredict() {
+  const proj  = document.getElementById('proj').value;
+  const train = document.getElementById('train').value;
+  const team  = document.getElementById('team').value;
+  const work  = document.getElementById('work').value;
+  const ot    = document.getElementById('ot').value;
+  const sat   = document.getElementById('sat').value;
+
+  document.getElementById('v-proj').textContent  = proj;
+  document.getElementById('v-train').textContent = train;
+  document.getElementById('v-team').textContent  = team;
+  document.getElementById('v-work').textContent  = work;
+  document.getElementById('v-ot').textContent    = ot;
+  document.getElementById('v-sat').textContent   = parseFloat(sat).toFixed(1);
+
+  // Set correlation bar widths from data-value
+document.querySelectorAll('.corr-bar').forEach(function(bar) {
+  var val    = parseFloat(bar.getAttribute('data-value'));
+  var absVal = val >= 0 ? val : val * -1;
+
+  // Find max value among all bars for relative scaling
+  var allBars = document.querySelectorAll('.corr-bar');
+  var maxVal  = 0;
+  allBars.forEach(function(b) {
+    var v = Math.abs(parseFloat(b.getAttribute('data-value')));
+    if (v > maxVal) maxVal = v;
+  });
+
+  // Scale relative to max value so bars look proportional
+  var width = maxVal > 0 ? Math.round((absVal / maxVal) * 90) : 0;
+  bar.style.width = width + '%';
+});
+
+  fetch('/predict', {
+    method : 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body   : JSON.stringify({
+      projects    : proj,
+      training    : train,
+      teamsize    : team,
+      workhours   : work,
+      overtime    : ot,
+      satisfaction: sat,
+      sickdays    : 5,
+      years       : 3
+    })
+  })
+  .then(res    => res.json())
+  .then(result => {
+    const isTrue = result.result === 'TRUE';
+    document.getElementById('result-circle').className = 'result-circle ' + (isTrue ? 'circle-true' : 'circle-false');
+    document.getElementById('result-word').textContent = result.result;
+    document.getElementById('result-word').style.color = isTrue ? 'var(--green)' : 'var(--red)';
+    document.getElementById('prob-label').textContent  = 'Probability TRUE: ' + result.prob_true + '%';
+    document.getElementById('prob-label').style.color  = isTrue ? 'var(--green)' : 'var(--red)';
+    document.getElementById('prob-f-label').textContent = 'FALSE: ' + result.prob_false + '%';
+    document.getElementById('prob-t').style.width = result.prob_true  + '%';
+    document.getElementById('prob-f').style.width = result.prob_false + '%';
+    document.getElementById('result-msg').textContent  = isTrue
+      ? 'ML model predicts GOOD team coordination for this profile.'
+      : 'ML model predicts POOR team coordination for this profile.';
+  })
+  .catch(() => {
+    document.getElementById('result-msg').textContent = 'Error: Make sure app.py is running in CMD!';
+  });
+}
+
+runPredict();
+</script>
+</body>
+</html>
